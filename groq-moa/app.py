@@ -27,19 +27,50 @@ layer_agent_config_def = {
     "layer_agent_1": {
         "system_prompt": "Analyze the user prompt and structure the plan for creating the website step by step, including selecting relevant image categories and mapping content. {helper_response}",
         "model_name": "llama3-8b-8192",
+      
     },
     "layer_agent_2": {
         "system_prompt": "Generate the website's HTML, CSS, and embedded JavaScript code according to the structured plan. Ensure all content adheres to best practices and consistency with the design. {helper_response}",
         "model_name": "gemma-7b-it",
-        "temperature": 0.7
+        "temperature": 0.7  # Slightly higher temperature for creative content generation
     },
     "layer_agent_3": {
-        "system_prompt": "You are an expert at logic and reasoning. Validate, optimize, and correct any issues in the generated code to ensure the website is responsive, efficient, and clean. {helper_response}",
+        "system_prompt": "You are an expert at logic and reasoning. Validate, optimize, and correct any issues in the generated code to ensure the website is responsive, efficient, and clean and You are an expert planner agent. Create a plan for structuring the response to ensure proper flow and efficiency in answering the human's query about generating web content. {helper_response}",
         "model_name": "llama3-8b-8192",
+      
     }
 }
 
-# Function to stream responses from MOAgent
+# Recommended Configuration
+rec_config = {
+    "main_model": "llama3-70b-8192",
+    "cycles": 2,  # Reduced cycles for faster response time
+    "layer_agent_config": {}
+}
+
+layer_agent_config_rec = {
+    "layer_agent_1": {
+        "system_prompt": "Analyze the user prompt and structure the plan for creating the website step by step, including selecting relevant image categories and mapping content. {helper_response}",
+        "model_name": "llama3-8b-8192",
+        "temperature": 0.1  # Low temperature for consistency in step-by-step analysis
+    },
+    "layer_agent_2": {
+        "system_prompt": "Generate the website's HTML, CSS, and embedded JavaScript code according to the structured plan. Ensure all content adheres to best practices and consistency with the design. {helper_response}",
+        "model_name": "gemma-7b-it",
+        "temperature": 0.3  # Slightly higher temperature for creative content generation
+    },
+    "layer_agent_3": {
+        "system_prompt": "You are an expert at logic and reasoning. Validate, optimize, and correct any issues in the generated code to ensure the website is responsive, efficient, and clean and. {helper_response}",
+        "model_name": "llama3-8b-8192",
+        "temperature": 0.2  # Logical and consistent checks
+    },
+    "layer_agent_4": {
+        "system_prompt": "You are an expert planner agent. Create a plan for structuring the response to ensure proper flow and efficiency in answering the human's query about generating web content. {helper_response}",
+        "model_name": "llama3-8b-8192",
+        "temperature": 0.5  # Balancing creativity and structure
+    }
+}
+
 def stream_response(messages: Iterable[ResponseChunk]):
     layer_outputs = {}
     for message in messages:
@@ -49,16 +80,20 @@ def stream_response(messages: Iterable[ResponseChunk]):
                 layer_outputs[layer] = []
             layer_outputs[layer].append(message['delta'])
         else:
+            # Display accumulated layer outputs
             for layer, outputs in layer_outputs.items():
                 st.write(f"Layer {layer}")
                 cols = st.columns(len(outputs))
                 for i, output in enumerate(outputs):
                     with cols[i]:
                         st.expander(label=f"Agent {i+1}", expanded=False).write(output)
+            
+            # Clear layer outputs for the next iteration
             layer_outputs = {}
+            
+            # Yield the main agent's output
             yield message['delta']
 
-# Function to set up the MOAgent
 def set_moa_agent(
     main_model: str = default_config['main_model'],
     cycles: int = default_config['cycles'],
@@ -68,18 +103,26 @@ def set_moa_agent(
 ):
     if override or ("main_model" not in st.session_state):
         st.session_state.main_model = main_model
+    else:
+        if "main_model" not in st.session_state: st.session_state.main_model = main_model 
 
     if override or ("cycles" not in st.session_state):
         st.session_state.cycles = cycles
+    else:
+        if "cycles" not in st.session_state: st.session_state.cycles = cycles
 
     if override or ("layer_agent_config" not in st.session_state):
         st.session_state.layer_agent_config = layer_agent_config
+    else:
+        if "layer_agent_config" not in st.session_state: st.session_state.layer_agent_config = layer_agent_config
 
     if override or ("main_temp" not in st.session_state):
         st.session_state.main_temp = main_model_temperature
+    else:
+        if "main_temp" not in st.session_state: st.session_state.main_temp = main_model_temperature
 
     cls_ly_conf = copy.deepcopy(st.session_state.layer_agent_config)
-
+    
     if override or ("moa_agent" not in st.session_state):
         st.session_state.moa_agent = MOAgent.from_config(
             main_model=st.session_state.main_model,
@@ -91,37 +134,14 @@ def set_moa_agent(
     del cls_ly_conf
     del layer_agent_config
 
-# Streamlit page configuration
 st.set_page_config(
     page_title="Mixture-Of-Agents Powered by Groq",
     page_icon='static/favicon.ico',
-    menu_items={
+        menu_items={
         'About': "## Groq Mixture-Of-Agents \n Powered by [Groq](https://groq.com)"
     },
     layout="wide"
 )
-
-# Main app layout
-st.header("Mixture of Agents", anchor=False)
-st.write("A demo of the Mixture of Agents architecture proposed by Together AI, Powered by Groq LLMs.")
-
-# Dynamically construct the path for the image
-current_dir = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(current_dir, "static", "moa_groq.svg")
-
-# Verify if the image exists and display it
-if os.path.exists(image_path):
-    st.image(image_path, caption="Mixture of Agents Workflow", width=1000)
-else:
-    st.error(f"Image not found at path: {image_path}")
-
-# Initialize session state
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-set_moa_agent()
-
-# Define valid model names
 valid_model_names = [
     'llama3-70b-8192',
     'llama3-8b-8192',
@@ -130,17 +150,36 @@ valid_model_names = [
     'mixtral-8x7b-32768'
 ]
 
+st.markdown("<a href='https://groq.com'><img src='app/static/banner.png' width='500'></a>", unsafe_allow_html=True)
+st.write("---")
+
+
+
+# Initialize session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+set_moa_agent()
+
 # Sidebar for configuration
 with st.sidebar:
+    # config_form = st.form("Agent Configuration", border=False)
     st.title("MOA Configuration")
     with st.form("Agent Configuration", border=False):
-        # Main model selection
-        new_main_model = st.selectbox(
-            "Select Main Model",
-            options=valid_model_names,
-            index=valid_model_names.index(st.session_state.main_model)
-        )
-
+        if st.form_submit_button("Use Recommended Config"):
+            try:
+                set_moa_agent(
+                    main_model=rec_config['main_model'],
+                    cycles=rec_config['cycles'],
+                    layer_agent_config=layer_agent_config_rec,
+                    override=True
+                )
+                st.session_state.messages = []
+                st.success("Configuration updated successfully!")
+            except json.JSONDecodeError:
+                st.error("Invalid JSON in Layer Agent Configuration. Please check your input.")
+            except Exception as e:
+                st.error(f"Error updating configuration: {str(e)}")
         # Main model selection
         new_main_model = st.selectbox(
             "Select Main Model",
@@ -166,10 +205,13 @@ with st.sidebar:
         )
 
         # Layer agent configuration
+        tooltip = "Agents in the layer agent configuration run in parallel _per cycle_. Each layer agent supports all initialization parameters of [Langchain's ChatGroq](https://api.python.langchain.com/en/latest/chat_models/langchain_groq.chat_models.ChatGroq.html) class as valid dictionary fields."
+        st.markdown("Layer Agent Config", help=tooltip)
         new_layer_agent_config = st_ace(
             value=json.dumps(st.session_state.layer_agent_config, indent=2),
             language='json',
             placeholder="Layer Agent Configuration (JSON)",
+            show_gutter=False,
             wrap=True,
             auto_update=True
         )
@@ -187,11 +229,48 @@ with st.sidebar:
                 st.session_state.messages = []
                 st.success("Configuration updated successfully!")
             except json.JSONDecodeError:
-                st.error("Invalid JSON in Layer Agent Configuration.")
+                st.error("Invalid JSON in Layer Agent Configuration. Please check your input.")
             except Exception as e:
                 st.error(f"Error updating configuration: {str(e)}")
 
-# Display chat interface
+    st.markdown("---")
+    st.markdown("""
+    ### Credits
+    - MOA: [Together AI](https://www.together.ai/blog/together-moa)
+    - LLMs: [Groq](https://groq.com/)
+    - Paper: [arXiv:2406.04692](https://arxiv.org/abs/2406.04692)
+    """)
+
+# Main app layout
+st.header("Mixture of Agents", anchor=False)
+st.write("A demo of the Mixture of Agents architecture proposed by Together AI, Powered by Groq LLMs.")
+
+# Get the path to the directory where this script is running
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the full path to the image
+image_path = os.path.join(current_dir, "static", "moa_groq.svg")
+
+# Display the image in the app
+st.image(image_path, caption="Mixture of Agents Workflow", width=1000)
+
+# Display current configuration
+with st.expander("Current MOA Configuration", expanded=False):
+    st.markdown(f"**Main Model**: ``{st.session_state.main_model}``")
+    st.markdown(f"**Main Model Temperature**: ``{st.session_state.main_temp:.1f}``")
+    st.markdown(f"**Layers**: ``{st.session_state.cycles}``")
+    st.markdown(f"**Layer Agents Config**:")
+    new_layer_agent_config = st_ace(
+        value=json.dumps(st.session_state.layer_agent_config, indent=2),
+        language='json',
+        placeholder="Layer Agent Configuration (JSON)",
+        show_gutter=False,
+        wrap=True,
+        readonly=True,
+        auto_update=True
+    )
+
+# Chat interface
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
