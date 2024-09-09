@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import json
 from typing import Iterable
@@ -6,13 +7,14 @@ from moa.agent.moa import ResponseChunk
 from streamlit_ace import st_ace
 import copy
 from dotenv import load_dotenv
-import os
+
 
 load_dotenv()
 
 groq_api_key = os.getenv('GROQ_API_KEY')
 if not groq_api_key:
     raise ValueError("GROQ_API_KEY not set")
+
 
 # Default configuration
 default_config = {
@@ -242,7 +244,15 @@ with st.sidebar:
 # Main app layout
 st.header("Mixture of Agents", anchor=False)
 st.write("A demo of the Mixture of Agents architecture proposed by Together AI, Powered by Groq LLMs.")
-st.image("./static/moa_groq.svg", caption="Mixture of Agents Workflow", width=1000)
+
+# Get the path to the directory where this script is running
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Construct the full path to the image
+image_path = os.path.join(current_dir, "static", "moa_groq.svg")
+
+# Display the image in the app
+st.image(image_path, caption="Mixture of Agents Workflow", width=1000)
 
 # Display current configuration
 with st.expander("Current MOA Configuration", expanded=False):
