@@ -121,19 +121,25 @@ if "messages" not in st.session_state:
 
 set_moa_agent()
 
+# Define valid model names
+valid_model_names = [
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+    'gemma-7b-it',
+    'gemma2-9b-it',
+    'mixtral-8x7b-32768'
+]
+
 # Sidebar for configuration
 with st.sidebar:
     st.title("MOA Configuration")
     with st.form("Agent Configuration", border=False):
-        if st.form_submit_button("Use Recommended Config"):
-            try:
-                set_moa_agent(override=True)
-                st.session_state.messages = []
-                st.success("Configuration updated successfully!")
-            except json.JSONDecodeError:
-                st.error("Invalid JSON in Layer Agent Configuration. Please check your input.")
-            except Exception as e:
-                st.error(f"Error updating configuration: {str(e)}")
+        # Main model selection
+        new_main_model = st.selectbox(
+            "Select Main Model",
+            options=valid_model_names,
+            index=valid_model_names.index(st.session_state.main_model)
+        )
 
         # Main model selection
         new_main_model = st.selectbox(
