@@ -138,7 +138,7 @@ st.set_page_config(
     page_title="Mixture-Of-Agents Powered by Groq",
     page_icon='static/favicon.ico',
         menu_items={
-        'About': "## Groq Mixture-Of-Agents \n Powered by [Groq](https://groq.com)"
+        'About': "## Groq Mixture-Of-Agents \n Powered by [Groq](https://groq.com/wp-content/uploads/2024/03/GroqRack-Hero-23_crop_DG-2048x1152.png)"
     },
     layout="wide"
 )
@@ -150,7 +150,7 @@ valid_model_names = [
     'mixtral-8x7b-32768'
 ]
 
-st.markdown("<a href='https://groq.com/wp-content/uploads/2024/03/GroqRack-Hero-23_crop_DG-2048x1152.png.webp'><img src='app/static/banner.png' width='500'></a>", unsafe_allow_html=True)
+st.markdown("<a href='https://groq.com/'><img src='app/static/banner.png' width='500'></a>", unsafe_allow_html=True)
 st.write("---")
 
 
