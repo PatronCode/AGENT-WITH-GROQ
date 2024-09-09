@@ -150,7 +150,7 @@ valid_model_names = [
     'mixtral-8x7b-32768'
 ]
 
-st.markdown("<a href='https://groq.com'><img src='app/static/banner.png' width='500'></a>", unsafe_allow_html=True)
+st.markdown("<a href='https://groq.com/wp-content/uploads/2024/03/GroqRack-Hero-23_crop_DG-2048x1152.png.webp'><img src='app/static/banner.png' width='500'></a>", unsafe_allow_html=True)
 st.write("---")
 
 
@@ -243,7 +243,7 @@ with st.sidebar:
 
 # Main app layout
 st.header("Mixture of Agents", anchor=False)
-st.write("A demo of the Mixture of Agents architecture proposed by Together AI, Powered by Groq LLMs.")
+st.write("A demo of the Mixture of Agents architecture Powered by Groq LLMs.")
 
 # Get the path to the directory where this script is running
 current_dir = os.path.dirname(os.path.abspath(__file__))
